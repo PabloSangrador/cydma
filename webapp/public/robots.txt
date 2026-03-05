@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /almacen
+Disallow: /almacen/
+Disallow: /export
+Disallow: /export/
+Disallow: /contract
+Disallow: /contract/
+Disallow: /calculadora
+Disallow: /calculadora/
+
+Sitemap: https://cydma.es/sitemap.xml

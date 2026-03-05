@@ -1,0 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CYDMA Design System v2
+   Premium warmth with contemporary elegance
+*/
+
+@layer base {
+  :root {
+    /* Premium architecture-inspired palette */
+    --background: 30 10% 98%;
+    --foreground: 20 25% 8%;
+
+    /* Cards - crisp white */
+    --card: 0 0% 100%;
+    --card-foreground: 20 25% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 25% 8%;
+
+    /* Deep rich brown - refined primary */
+    --primary: 22 65% 18%;
+    --primary-foreground: 30 10% 98%;
+
+    /* Soft warm secondary */
+    --secondary: 30 20% 94%;
+    --secondary-foreground: 22 45% 22%;
+
+    /* Sophisticated bronze/gold accent */
+    --accent: 32 55% 42%;
+    --accent-foreground: 30 10% 98%;
+
+    /* Muted with warmth */
+    --muted: 30 12% 94%;
+    --muted-foreground: 20 12% 40%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Refined subtle borders */
+    --border: 30 12% 88%;
+    --input: 30 12% 88%;
+    --ring: 22 65% 18%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar */
+    --sidebar-background: 22 35% 8%;
+    --sidebar-foreground: 30 20% 92%;
+    --sidebar-primary: 32 55% 48%;
+    --sidebar-primary-foreground: 30 10% 98%;
+    --sidebar-accent: 22 40% 14%;
+    --sidebar-accent-foreground: 30 20% 92%;
+    --sidebar-border: 22 30% 14%;
+    --sidebar-ring: 32 55% 48%;
+  }
+
+  .dark {
+    --background: 20 25% 5%;
+    --foreground: 30 15% 94%;
+
+    --card: 20 20% 7%;
+    --card-foreground: 30 15% 94%;
+
+    --popover: 20 20% 7%;
+    --popover-foreground: 30 15% 94%;
+
+    --primary: 32 55% 52%;
+    --primary-foreground: 20 25% 5%;
+
+    --secondary: 20 18% 12%;
+    --secondary-foreground: 30 15% 94%;
+
+    --accent: 32 55% 52%;
+    --accent-foreground: 20 25% 5%;
+
+    --muted: 20 15% 12%;
+    --muted-foreground: 28 12% 55%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 20 18% 13%;
+    --input: 20 18% 13%;
+    --ring: 32 55% 52%;
+
+    --sidebar-background: 20 30% 4%;
+    --sidebar-foreground: 30 15% 94%;
+    --sidebar-primary: 32 55% 52%;
+    --sidebar-primary-foreground: 20 25% 5%;
+    --sidebar-accent: 20 22% 9%;
+    --sidebar-accent-foreground: 30 15% 94%;
+    --sidebar-border: 20 18% 11%;
+    --sidebar-ring: 32 55% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Section spacing utilities */
+  .section-padding {
+    @apply py-[7.5rem] px-6 md:px-8 lg:px-12;
+  }
+
+  .section-padding-lg {
+    @apply py-[10rem] px-6 md:px-8 lg:px-12;
+  }
+
+  .section-padding-xl {
+    @apply py-[12rem] px-6 md:px-8 lg:px-12;
+  }
+
+  /* Glass morphism utility */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-black/30 backdrop-blur-xl border border-white/10;
+  }
+
+  /* Grain texture overlay */
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+/* Modern animations with refined easing */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-blur-in {
+  animation: blur-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger animation delays - refined timing */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.35s; }
+.stagger-4 { animation-delay: 0.5s; }
+.stagger-5 { animation-delay: 0.65s; }
+.stagger-6 { animation-delay: 0.8s; }
+
+/* Animation delay utilities */
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+
+/* Selection color */
+::selection {
+  background-color: hsl(32 55% 42% / 0.2);
+  color: hsl(20 25% 8%);
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(20 12% 70%);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(20 12% 55%);
+}
