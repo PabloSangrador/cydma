@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import {
@@ -6,9 +6,9 @@ import {
   getCategoryBySlug,
   getProductsByCategory,
 } from "@/data/catalog";
-import { ArrowRight, ChevronRight, Filter, X, ChevronLeft } from "lucide-react";
+import { ArrowRight, ChevronRight, Filter, X, ChevronLeft, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/motion/ScrollReveal";
 import SEOHead from "@/components/seo/SEOHead";
 import { useCatalogSEO } from "@/hooks/useSEO";
@@ -42,6 +42,7 @@ export default function CatalogoCategoria() {
   }>();
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [subcatSearch, setSubcatSearch] = useState("");
 
   const category = getCategoryBySlug(categoria || "");
   const subcategoryData = category?.subcategories?.find(
@@ -60,7 +61,18 @@ export default function CatalogoCategoria() {
   // Reset page when category/subcategory changes
   useEffect(() => {
     setCurrentPage(1);
+    setSubcatSearch("");
   }, [categoria, subcategoria]);
+
+  const filteredSubcategories = useMemo(() => {
+    if (!category?.subcategories) return [];
+    if (!subcatSearch.trim()) return category.subcategories;
+    return category.subcategories.filter((s) =>
+      s.name.toLowerCase().includes(subcatSearch.toLowerCase())
+    );
+  }, [category?.subcategories, subcatSearch]);
+
+  const hasSearch = (category?.subcategories?.length ?? 0) > 8;
 
   // Fetch products from API
   const { data: allProducts = [], isLoading } = useQuery<ApiProduct[]>({
@@ -216,308 +228,434 @@ export default function CatalogoCategoria() {
         </div>
       </section>
 
-      {/* Filter Bar */}
-      <ScrollReveal variant="fade-up" threshold={0.1}>
-        <div className="sticky top-16 z-30 bg-background border-b border-border/50">
-          <div className="container py-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {isLoading ? (
-                <span className="inline-block w-24 h-4 bg-secondary animate-pulse rounded" />
-              ) : (
-                `${allProducts.length} producto${allProducts.length !== 1 ? "s" : ""}`
-              )}
-            </p>
-
-            {/* Mobile filter toggle */}
-            <button
-              onClick={() => setFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 text-sm font-medium text-foreground"
-            >
-              <Filter className="h-4 w-4" />
-              Filtros
-            </button>
-
-            {/* Desktop: show subcategory tabs */}
-            <div className="hidden lg:flex items-center gap-1">
-              <Link
-                to={`/catalogo/${category.slug}`}
-                className={cn(
-                  "px-4 py-2 text-sm rounded-full transition-colors",
-                  !subcategoria
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-              >
-                Todas
-              </Link>
-              {category.subcategories?.slice(0, 6).map((sub) => (
-                <Link
-                  key={sub.id}
-                  to={`/catalogo/${category.slug}/${sub.slug}`}
-                  className={cn(
-                    "px-4 py-2 text-sm rounded-full transition-colors",
-                    subcategoria === sub.slug
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  )}
-                >
-                  {sub.name}
-                </Link>
-              ))}
-              {category.subcategories && category.subcategories.length > 6 && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  +{category.subcategories.length - 6} mas
-                </span>
-              )}
-            </div>
-          </div>
+      {/* Mobile top bar */}
+      <div className="lg:hidden sticky top-16 z-30 bg-background border-b border-border/50">
+        <div className="container py-3 flex items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground shrink-0">
+            {isLoading ? (
+              <span className="inline-block w-20 h-4 bg-secondary animate-pulse rounded" />
+            ) : (
+              `${allProducts.length} producto${allProducts.length !== 1 ? "s" : ""}`
+            )}
+          </p>
+          <button
+            onClick={() => setFilterOpen(true)}
+            className="flex items-center gap-2 text-sm font-medium border border-border rounded-lg px-3 py-1.5 hover:bg-secondary transition-colors"
+          >
+            <Filter className="h-4 w-4" />
+            {subcategoria ? subcategoryData?.name : "Subcategorías"}
+            {category.subcategories && (
+              <span className="text-xs text-muted-foreground">
+                ({category.subcategories.length})
+              </span>
+            )}
+          </button>
         </div>
-      </ScrollReveal>
+      </div>
 
       {/* Mobile Filter Drawer */}
-      <div
-        className={cn(
-          "fixed inset-0 z-50 lg:hidden transition-all duration-300",
-          filterOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        )}
-      >
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/50"
-          onClick={() => setFilterOpen(false)}
-        />
+      <AnimatePresence>
+        {filterOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            {/* Backdrop */}
+            <motion.div
+              className="absolute inset-0 bg-black/50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setFilterOpen(false)}
+            />
 
-        {/* Drawer */}
-        <div
-          className={cn(
-            "absolute top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-background shadow-xl transform transition-transform duration-300",
-            filterOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          <div className="p-6 border-b border-border flex items-center justify-between">
-            <h3 className="font-serif text-lg font-medium">Filtros</h3>
-            <button onClick={() => setFilterOpen(false)}>
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+            {/* Drawer from bottom */}
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 bg-background rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-border" />
+              </div>
 
-          <div className="p-6 overflow-auto h-[calc(100%-80px)]">
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-4">
-              Subcategorias
-            </h4>
-            <ul className="space-y-1">
-              <li>
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                <div>
+                  <h3 className="font-serif text-lg font-medium">Subcategorías</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {category.subcategories?.length ?? 0} disponibles
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFilterOpen(false)}
+                  className="p-2 rounded-lg hover:bg-secondary transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Search (if many subcategories) */}
+              {hasSearch && (
+                <div className="px-6 pt-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Buscar subcategoría..."
+                      value={subcatSearch}
+                      onChange={(e) => setSubcatSearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 text-sm bg-secondary/50 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* List */}
+              <div className="overflow-y-auto flex-1 px-6 py-4">
+                {/* "Todas" pill */}
                 <Link
                   to={`/catalogo/${category.slug}`}
                   onClick={() => setFilterOpen(false)}
                   className={cn(
-                    "block px-4 py-3 rounded-lg text-sm transition-colors",
+                    "flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm mb-1 transition-colors",
                     !subcategoria
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary"
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : "hover:bg-secondary text-foreground"
                   )}
                 >
-                  Todas ({getProductsByCategory(category.id).length})
+                  <span>Todas las subcategorías</span>
+                  {!subcategoria && <ChevronRight className="h-4 w-4" />}
                 </Link>
-              </li>
-              {category.subcategories?.map((sub) => (
-                <li key={sub.id}>
+
+                {filteredSubcategories.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Sin resultados para "{subcatSearch}"
+                  </p>
+                ) : (
+                  <ul className="space-y-1">
+                    {filteredSubcategories.map((sub) => (
+                      <li key={sub.id}>
+                        <Link
+                          to={`/catalogo/${category.slug}/${sub.slug}`}
+                          onClick={() => setFilterOpen(false)}
+                          className={cn(
+                            "flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm transition-colors",
+                            subcategoria === sub.slug
+                              ? "bg-primary text-primary-foreground font-medium"
+                              : "hover:bg-secondary text-foreground"
+                          )}
+                        >
+                          <span>{sub.name}</span>
+                          {subcategoria === sub.slug && <ChevronRight className="h-4 w-4" />}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Other categories */}
+                <div className="mt-6 pt-5 border-t border-border">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-medium">
+                    Otras categorías
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {categories
+                      .filter((c) => c.id !== category.id)
+                      .map((c) => (
+                        <Link
+                          key={c.id}
+                          to={`/catalogo/${c.slug}`}
+                          onClick={() => setFilterOpen(false)}
+                          className="text-xs px-3 py-1.5 border border-border rounded-full text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                        >
+                          {c.name}
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Main layout: sidebar + grid */}
+      <div className="container py-10 lg:py-14">
+        <div className="flex gap-8 items-start">
+
+          {/* ── SIDEBAR (desktop only) ── */}
+          {category.subcategories && category.subcategories.length > 0 && (
+            <aside className="hidden lg:block w-56 xl:w-64 shrink-0 sticky top-28 self-start">
+              <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
+                {/* Sidebar header */}
+                <div className="px-5 py-4 border-b border-border/60 bg-secondary/30">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Subcategorías
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {category.subcategories.length} tipos
+                  </p>
+                </div>
+
+                {/* Search (if many) */}
+                {hasSearch && (
+                  <div className="px-4 pt-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Buscar..."
+                        value={subcatSearch}
+                        onChange={(e) => setSubcatSearch(e.target.value)}
+                        className="w-full pl-8 pr-3 py-2 text-xs bg-secondary/50 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Subcategory list */}
+                <nav className="p-3 max-h-[65vh] overflow-y-auto">
+                  {/* "Todas" */}
                   <Link
-                    to={`/catalogo/${category.slug}/${sub.slug}`}
-                    onClick={() => setFilterOpen(false)}
+                    to={`/catalogo/${category.slug}`}
                     className={cn(
-                      "block px-4 py-3 rounded-lg text-sm transition-colors",
-                      subcategoria === sub.slug
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-secondary"
+                      "flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm transition-colors group",
+                      !subcategoria
+                        ? "bg-primary text-primary-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     )}
                   >
-                    {sub.name}
+                    <span
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
+                        !subcategoria ? "bg-primary-foreground" : "bg-border group-hover:bg-foreground/40"
+                      )}
+                    />
+                    Todas
                   </Link>
-                </li>
-              ))}
-            </ul>
 
-            {/* Other categories */}
-            <div className="mt-8 pt-6 border-t border-border">
-              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-4">
-                Otras categorias
-              </h4>
-              <ul className="space-y-2">
-                {categories
-                  .filter((c) => c.id !== category.id)
-                  .map((c) => (
-                    <li key={c.id}>
+                  {/* Divider */}
+                  <div className="my-2 border-t border-border/50" />
+
+                  {filteredSubcategories.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4 px-2">
+                      Sin resultados para "{subcatSearch}"
+                    </p>
+                  ) : (
+                    filteredSubcategories.map((sub) => (
                       <Link
-                        to={`/catalogo/${c.slug}`}
-                        onClick={() => setFilterOpen(false)}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        key={sub.id}
+                        to={`/catalogo/${category.slug}/${sub.slug}`}
+                        className={cn(
+                          "flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm transition-colors group",
+                          subcategoria === sub.slug
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                        )}
                       >
-                        {c.name}
+                        <span
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
+                            subcategoria === sub.slug
+                              ? "bg-primary-foreground"
+                              : "bg-border group-hover:bg-foreground/40"
+                          )}
+                        />
+                        <span className="line-clamp-2 leading-snug">{sub.name}</span>
                       </Link>
-                    </li>
-                  ))}
-              </ul>
+                    ))
+                  )}
+                </nav>
+
+                {/* Other categories footer */}
+                <div className="px-4 py-4 border-t border-border/60 bg-secondary/20">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">
+                    Otras categorías
+                  </p>
+                  <div className="space-y-1">
+                    {categories
+                      .filter((c) => c.id !== category.id)
+                      .map((c) => (
+                        <Link
+                          key={c.id}
+                          to={`/catalogo/${c.slug}`}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-0.5"
+                        >
+                          <ChevronRight className="h-3 w-3 text-accent/50" />
+                          {c.name}
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </aside>
+          )}
+
+          {/* ── PRODUCTS AREA ── */}
+          <div className="flex-1 min-w-0">
+            {/* Desktop: breadcrumb + count bar */}
+            <div className="hidden lg:flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Link to={`/catalogo/${category.slug}`} className="hover:text-foreground transition-colors">
+                  {category.name}
+                </Link>
+                {subcategoryData && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                    <span className="text-foreground font-medium">{subcategoryData.name}</span>
+                  </>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {isLoading ? (
+                  <span className="inline-block w-24 h-4 bg-secondary animate-pulse rounded" />
+                ) : (
+                  `${allProducts.length} producto${allProducts.length !== 1 ? "s" : ""}`
+                )}
+              </p>
             </div>
+
+            {/* Products grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="rounded-xl bg-secondary/40 animate-pulse">
+                    <div className="aspect-[4/5]" />
+                    <div className="p-4 space-y-2">
+                      <div className="h-3 w-16 bg-secondary rounded" />
+                      <div className="h-5 w-3/4 bg-secondary rounded" />
+                      <div className="h-3 w-24 bg-secondary rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : products.length > 0 ? (
+              <>
+                <StaggerContainer
+                  key={`${categoria}-${subcategoria}-${currentPage}`}
+                  className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5"
+                  stagger={0.05}
+                  delay={0.05}
+                >
+                  {products.map((product) => (
+                    <StaggerItem key={product.id} variant="scale">
+                      <Link
+                        to={`/producto/${product.slug}`}
+                        className="group block overflow-hidden rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="relative aspect-[4/5] overflow-hidden bg-secondary/30">
+                          {product.images.length > 0 ? (
+                            <>
+                              <img
+                                src={product.images[0]}
+                                alt={product.name}
+                                className={cn(
+                                  "w-full h-full object-contain transition-all duration-500",
+                                  product.images[1]
+                                    ? "group-hover:opacity-0"
+                                    : "group-hover:scale-105"
+                                )}
+                              />
+                              {product.images[1] ? (
+                                <img
+                                  src={product.images[1]}
+                                  alt={product.name}
+                                  className="absolute inset-0 w-full h-full object-contain opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                />
+                              ) : null}
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                              Sin imagen
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-end justify-center pb-4">
+                            <span className="bg-white text-foreground px-4 py-2 text-xs font-medium rounded-full opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-md">
+                              Ver detalle
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <span className="text-[10px] text-accent font-medium tracking-wider uppercase">
+                            {category.name}
+                          </span>
+                          <h3 className="font-serif text-base lg:text-lg text-foreground mt-1 mb-1 line-clamp-1 group-hover:text-primary transition-colors">
+                            {product.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            Ref: {product.code}
+                          </p>
+                        </div>
+                      </Link>
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <ScrollReveal variant="fade-up">
+                    <div className="flex items-center justify-center gap-2 mt-12">
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg border border-border hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+
+                      {getPaginationNumbers().map((page, idx) =>
+                        typeof page === "string" ? (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="w-10 h-10 flex items-center justify-center text-muted-foreground"
+                          >
+                            ...
+                          </span>
+                        ) : (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={cn(
+                              "w-10 h-10 rounded-lg text-sm font-medium transition-colors",
+                              currentPage === page
+                                ? "bg-primary text-primary-foreground"
+                                : "border border-border hover:bg-secondary"
+                            )}
+                          >
+                            {page}
+                          </button>
+                        )
+                      )}
+
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-lg border border-border hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </ScrollReveal>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground mb-6">
+                  No hay productos en esta categoría.
+                </p>
+                <Link
+                  to="/catalogo"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:scale-[1.02] transition-transform"
+                >
+                  Ver todo el catálogo
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Products Grid */}
-      <section className="py-12 lg:py-16">
-        <div className="container">
-          {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="rounded-xl bg-secondary/40 animate-pulse">
-                  <div className="aspect-[4/5]" />
-                  <div className="p-4 space-y-2">
-                    <div className="h-3 w-16 bg-secondary rounded" />
-                    <div className="h-5 w-3/4 bg-secondary rounded" />
-                    <div className="h-3 w-24 bg-secondary rounded" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : products.length > 0 ? (
-            <>
-              <StaggerContainer
-                key={`${categoria}-${subcategoria}-${currentPage}`}
-                className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6"
-                stagger={0.06}
-                delay={0.1}
-              >
-                {products.map((product) => (
-                  <StaggerItem key={product.id} variant="scale">
-                    <Link
-                      to={`/producto/${product.slug}`}
-                      className="group block overflow-hidden rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-lg transition-all duration-300"
-                    >
-                      {/* Image container with hover swap */}
-                      <div className="relative aspect-[4/5] overflow-hidden bg-secondary/30">
-                        {product.images.length > 0 ? (
-                          <>
-                            {/* Main image */}
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className={cn(
-                                "w-full h-full object-contain transition-all duration-500",
-                                product.images[1]
-                                  ? "group-hover:opacity-0"
-                                  : "group-hover:scale-105"
-                              )}
-                            />
-                            {/* Second image on hover (if exists) */}
-                            {product.images[1] ? (
-                              <img
-                                src={product.images[1]}
-                                alt={product.name}
-                                className="absolute inset-0 w-full h-full object-contain opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                              />
-                            ) : null}
-                          </>
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                            Sin imagen
-                          </div>
-                        )}
-
-                        {/* Hover overlay with button */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-end justify-center pb-4">
-                          <span className="bg-white text-foreground px-4 py-2 text-xs font-medium rounded-full opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-md">
-                            Ver detalle
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-4">
-                        {/* Category tag */}
-                        <span className="text-[10px] text-accent font-medium tracking-wider uppercase">
-                          {category.name}
-                        </span>
-
-                        <h3 className="font-serif text-base lg:text-lg text-foreground mt-1 mb-1 line-clamp-1 group-hover:text-primary transition-colors">
-                          {product.name}
-                        </h3>
-
-                        <p className="text-xs text-muted-foreground">
-                          Ref: {product.code}
-                        </p>
-                      </div>
-                    </Link>
-                  </StaggerItem>
-                ))}
-              </StaggerContainer>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <ScrollReveal variant="fade-up">
-                  <div className="flex items-center justify-center gap-2 mt-12">
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="p-2 rounded-lg border border-border hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </button>
-
-                    {getPaginationNumbers().map((page, idx) =>
-                      typeof page === "string" ? (
-                        <span
-                          key={`ellipsis-${idx}`}
-                          className="w-10 h-10 flex items-center justify-center text-muted-foreground"
-                        >
-                          ...
-                        </span>
-                      ) : (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={cn(
-                            "w-10 h-10 rounded-lg text-sm font-medium transition-colors",
-                            currentPage === page
-                              ? "bg-primary text-primary-foreground"
-                              : "border border-border hover:bg-secondary"
-                          )}
-                        >
-                          {page}
-                        </button>
-                      )
-                    )}
-
-                    <button
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="p-2 rounded-lg border border-border hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </button>
-                  </div>
-                </ScrollReveal>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground mb-6">
-                No hay productos en esta categoria.
-              </p>
-              <Link
-                to="/catalogo"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:scale-[1.02] transition-transform"
-              >
-                Ver todo el catalogo
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
     </Layout>
   );
 }
