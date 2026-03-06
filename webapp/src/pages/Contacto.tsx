@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,10 @@ const ASUNTO_OPTIONS = [
   { value: "otro", label: "Otro" },
 ] as const;
 
+type AsuntoValue = (typeof ASUNTO_OPTIONS)[number]["value"];
+
+const VALID_ASUNTOS = ASUNTO_OPTIONS.map((o) => o.value);
+
 const contactSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellidos: z.string().min(2, "Los apellidos deben tener al menos 2 caracteres"),
@@ -53,6 +57,21 @@ const contactSchema = z.object({
 type ContactFormData = z.infer<typeof contactSchema>;
 
 export default function Contacto() {
+  const [searchParams] = useSearchParams();
+
+  // Read URL params set by product pages (?asunto=presupuesto&producto=Nombre)
+  const paramAsunto = searchParams.get("asunto");
+  const paramProducto = searchParams.get("producto");
+
+  const prefillAsunto: AsuntoValue | undefined =
+    paramAsunto && VALID_ASUNTOS.includes(paramAsunto as AsuntoValue)
+      ? (paramAsunto as AsuntoValue)
+      : undefined;
+
+  const prefillMensaje = paramProducto
+    ? `Hola, me interesa obtener información y presupuesto sobre el siguiente producto:\n${paramProducto}\n\n`
+    : undefined;
+
   const {
     register,
     handleSubmit,
@@ -61,6 +80,10 @@ export default function Contacto() {
     formState: { errors, isSubmitting },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
+    defaultValues: {
+      asunto: prefillAsunto,
+      mensaje: prefillMensaje,
+    },
   });
 
   const onSubmit = async (data: ContactFormData) => {
@@ -226,6 +249,11 @@ export default function Contacto() {
                   <h2 className="font-serif text-2xl font-semibold mb-2">
                     Solicitar Presupuesto
                   </h2>
+                  {paramProducto ? (
+                    <p className="text-sm text-accent font-medium mb-1">
+                      Producto: {paramProducto}
+                    </p>
+                  ) : null}
                   <p className="text-muted-foreground mb-6">
                     Complete el formulario y nos pondremos en contacto con usted.
                   </p>
@@ -295,14 +323,18 @@ export default function Contacto() {
                       />
                     </div>
 
-                    {/* Asunto — controlado con Controller para que shadcn Select funcione con react-hook-form */}
+                    {/* Asunto — Controller para que shadcn Select funcione con react-hook-form */}
                     <div className="space-y-2">
                       <Label htmlFor="asunto">Asunto *</Label>
                       <Controller
                         name="asunto"
                         control={control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value ?? ""}
+                            defaultValue={prefillAsunto}
+                          >
                             <SelectTrigger id="asunto" aria-invalid={!!errors.asunto}>
                               <SelectValue placeholder="Seleccione un asunto" />
                             </SelectTrigger>

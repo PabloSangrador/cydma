@@ -11,6 +11,7 @@ import Footer from "./Footer";
 import { ScrollProgressBar } from "@/components/ui/scroll-progress";
 import { BackToTopButton } from "@/components/ui/back-to-top";
 import { FadeInOnMount } from "@/components/ui/page-transition";
+import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 
 /**
  * Props for the Layout component.
@@ -45,8 +46,9 @@ export default function Layout({ children }: LayoutProps) {
 
       <Footer />
 
-      {/* Back to top button */}
+      {/* Floating buttons */}
       <BackToTopButton />
+      <WhatsAppButton />
     </div>
   );
 }

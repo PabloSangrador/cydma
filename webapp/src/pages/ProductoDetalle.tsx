@@ -366,7 +366,11 @@ export default function ProductoDetalle() {
 
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button asChild size="lg" variant="outline" className="flex-1">
-                      <Link to="/contacto">Solicitar Presupuesto</Link>
+                      <Link
+                        to={`/contacto?asunto=presupuesto&producto=${encodeURIComponent(product.name)}`}
+                      >
+                        Solicitar Presupuesto
+                      </Link>
                     </Button>
                     <Button variant="outline" size="lg" onClick={handleShare}>
                       <Share2 className="h-4 w-4 mr-2" />
