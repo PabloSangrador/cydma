@@ -8,6 +8,7 @@ import productsRouter from "./routes/products";
 import cartRouter from "./routes/cart";
 import ordersRouter from "./routes/orders";
 import paymentsRouter from "./routes/payments";
+import { contactRouter } from "./routes/contact";
 
 const app = new Hono();
 
@@ -42,6 +43,7 @@ app.route("/api/products", productsRouter);
 app.route("/api/cart", cartRouter);
 app.route("/api/orders", ordersRouter);
 app.route("/api/payments", paymentsRouter);
+app.route("/api/contact", contactRouter);
 
 // Global error handler — catches any unhandled thrown errors
 app.onError((err, c) => {

@@ -14,7 +14,6 @@ import { categories } from "@/data/catalog";
 import { cn } from "@/lib/utils";
 import MegaMenu from "./MegaMenu";
 import { useCart } from "@/contexts/CartContext";
-import CartDrawer from "@/components/cart/CartDrawer";
 
 /**
  * Describes a single item in the primary navigation list.
@@ -48,6 +47,8 @@ const navigation: NavItem[] = [
       { href: "/almacen", label: "Almacén" },
       { href: "/contract", label: "Contract" },
       { href: "/export", label: "Export" },
+      { href: "/calculadora", label: "Calculadora" },
+      { href: "/garantia", label: "Garantía" },
     ],
   },
   {
@@ -451,9 +452,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-
-      {/* Cart Drawer */}
-      <CartDrawer />
     </header>
   );
 }

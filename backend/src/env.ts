@@ -13,6 +13,8 @@ const envSchema = z.object({
   // Stripe (optional for Phase 1)
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Resend email service
+  RESEND_API_KEY: z.string().optional(),
 });
 
 /**

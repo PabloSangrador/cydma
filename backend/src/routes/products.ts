@@ -36,6 +36,20 @@ app.get("/", async (c) => {
   });
 });
 
+// GET /api/products/counts - product count grouped by categoryId
+app.get("/counts", async (c) => {
+  const rows = await prisma.product.groupBy({
+    by: ["categoryId"],
+    where: { isActive: true },
+    _count: { id: true },
+  });
+  const counts: Record<string, number> = {};
+  for (const row of rows) {
+    counts[row.categoryId] = row._count.id;
+  }
+  return c.json({ data: counts });
+});
+
 // GET /api/products/:slug - get product by slug
 app.get("/:slug", async (c) => {
   const slug = c.req.param("slug");

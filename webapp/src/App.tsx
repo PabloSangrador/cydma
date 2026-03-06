@@ -20,7 +20,6 @@ import Export from "./pages/Export";
 import Contacto from "./pages/Contacto";
 import ArmariosMedida from "./pages/ArmariosMedida";
 import PuertasMedida from "./pages/PuertasMedida";
-import Proyectos from "./pages/Proyectos";
 import Calculadora from "./pages/Calculadora";
 import Garantia from "./pages/Garantia";
 import Configurador from "./pages/Configurador";
@@ -59,7 +58,6 @@ const App = () => (
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/armarios-medida" element={<ArmariosMedida />} />
             <Route path="/puertas-medida" element={<PuertasMedida />} />
-            <Route path="/proyectos" element={<Proyectos />} />
             <Route path="/calculadora" element={<Calculadora />} />
             <Route path="/garantia" element={<Garantia />} />
             <Route path="/configurador" element={<Configurador />} />

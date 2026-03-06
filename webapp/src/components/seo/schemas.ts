@@ -17,10 +17,16 @@ export function getOrganizationSchema() {
     },
     "contactPoint": {
       "@type": "ContactPoint",
+      "telephone": "+34-983-625-022",
+      "email": "cydma@cydma.es",
       "contactType": "sales",
       "availableLanguage": ["Spanish", "English"]
     },
-    "sameAs": []
+    "sameAs": [
+      "https://www.instagram.com/cydma_iscar/",
+      "https://www.linkedin.com/company/cydma/",
+      "https://www.facebook.com/cydma.iscar"
+    ]
   };
 }
 
@@ -45,6 +51,8 @@ export function getLocalBusinessSchema() {
     "name": "CYDMA",
     "image": "https://cydma.es/og-base.png",
     "url": "https://cydma.es",
+    "telephone": "+34-983-625-022",
+    "email": "cydma@cydma.es",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Polígono Industrial",
@@ -62,9 +70,14 @@ export function getLocalBusinessSchema() {
       {
         "@type": "OpeningHoursSpecification",
         "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-        "opens": "08:00",
+        "opens": "09:00",
         "closes": "18:00"
       }
+    ],
+    "sameAs": [
+      "https://www.instagram.com/cydma_iscar/",
+      "https://www.linkedin.com/company/cydma/",
+      "https://www.facebook.com/cydma.iscar"
     ]
   };
 }

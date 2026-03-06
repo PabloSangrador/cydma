@@ -20,29 +20,61 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
-import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/motion/ScrollReveal";
 import SEOHead from "@/components/seo/SEOHead";
 import { getLocalBusinessSchema } from "@/components/seo/schemas";
+import { api } from "@/lib/api";
+
+const ASUNTO_OPTIONS = [
+  { value: "presupuesto", label: "Solicitud de presupuesto" },
+  { value: "catalogo", label: "Información del catálogo" },
+  { value: "contract", label: "Proyecto Contract" },
+  { value: "export", label: "Exportación internacional" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+const contactSchema = z.object({
+  nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  apellidos: z.string().min(2, "Los apellidos deben tener al menos 2 caracteres"),
+  email: z.string().email("Introduce un email válido"),
+  telefono: z.string().optional(),
+  empresa: z.string().optional(),
+  asunto: z.enum(["presupuesto", "catalogo", "contract", "export", "otro"], {
+    required_error: "Selecciona un asunto",
+  }),
+  mensaje: z.string().min(10, "El mensaje debe tener al menos 10 caracteres"),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
 
 export default function Contacto() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+  });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    toast.success("Mensaje enviado correctamente", {
-      description: "Nos pondremos en contacto con usted lo antes posible.",
-    });
-
-    setIsSubmitting(false);
-    (e.target as HTMLFormElement).reset();
+  const onSubmit = async (data: ContactFormData) => {
+    try {
+      await api.post("/api/contact", data);
+      toast.success("Mensaje enviado correctamente", {
+        description: "Nos pondremos en contacto con usted lo antes posible.",
+      });
+      reset();
+    } catch {
+      toast.error("Error al enviar el mensaje", {
+        description: "Por favor, inténtelo de nuevo o contáctenos por teléfono.",
+      });
+    }
   };
 
   return (
@@ -53,6 +85,7 @@ export default function Contacto() {
         canonical="https://cydma.es/contacto"
         schema={getLocalBusinessSchema()}
       />
+
       {/* Breadcrumb */}
       <div className="bg-secondary/30 border-b">
         <div className="container py-4">
@@ -101,6 +134,7 @@ export default function Contacto() {
       <section className="py-16">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+
             {/* Contact Info */}
             <div className="lg:col-span-1 space-y-8">
               <ScrollReveal variant="fade-up">
@@ -110,10 +144,7 @@ export default function Contacto() {
               </ScrollReveal>
               <StaggerContainer className="space-y-6" stagger={0.1}>
                 <StaggerItem variant="fade-up">
-                  <a
-                    href="tel:983625022"
-                    className="flex items-start gap-4 group"
-                  >
+                  <a href="tel:983625022" className="flex items-start gap-4 group">
                     <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 group-hover:bg-accent/10 transition-colors">
                       <Phone className="h-5 w-5 text-accent" />
                     </div>
@@ -127,10 +158,7 @@ export default function Contacto() {
                 </StaggerItem>
 
                 <StaggerItem variant="fade-up">
-                  <a
-                    href="mailto:cydma@cydma.es"
-                    className="flex items-start gap-4 group"
-                  >
+                  <a href="mailto:cydma@cydma.es" className="flex items-start gap-4 group">
                     <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 group-hover:bg-accent/10 transition-colors">
                       <Mail className="h-5 w-5 text-accent" />
                     </div>
@@ -144,10 +172,7 @@ export default function Contacto() {
                 </StaggerItem>
 
                 <StaggerItem variant="fade-up">
-                  <a
-                    href="mailto:export@cydma.es"
-                    className="flex items-start gap-4 group"
-                  >
+                  <a href="mailto:export@cydma.es" className="flex items-start gap-4 group">
                     <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 group-hover:bg-accent/10 transition-colors">
                       <Mail className="h-5 w-5 text-accent" />
                     </div>
@@ -205,99 +230,120 @@ export default function Contacto() {
                     Complete el formulario y nos pondremos en contacto con usted.
                   </p>
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+                    {/* Nombre + Apellidos */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="nombre">Nombre *</Label>
                         <Input
                           id="nombre"
-                          name="nombre"
                           placeholder="Su nombre"
-                          required
+                          {...register("nombre")}
+                          aria-invalid={!!errors.nombre}
                         />
+                        {errors.nombre ? (
+                          <p className="text-sm text-destructive">{errors.nombre.message}</p>
+                        ) : null}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="apellidos">Apellidos *</Label>
                         <Input
                           id="apellidos"
-                          name="apellidos"
                           placeholder="Sus apellidos"
-                          required
+                          {...register("apellidos")}
+                          aria-invalid={!!errors.apellidos}
                         />
+                        {errors.apellidos ? (
+                          <p className="text-sm text-destructive">{errors.apellidos.message}</p>
+                        ) : null}
                       </div>
                     </div>
 
+                    {/* Email + Teléfono */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="email">Email *</Label>
                         <Input
                           id="email"
-                          name="email"
                           type="email"
                           placeholder="su@email.com"
-                          required
+                          {...register("email")}
+                          aria-invalid={!!errors.email}
                         />
+                        {errors.email ? (
+                          <p className="text-sm text-destructive">{errors.email.message}</p>
+                        ) : null}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="telefono">Teléfono</Label>
                         <Input
                           id="telefono"
-                          name="telefono"
                           type="tel"
                           placeholder="Su teléfono"
+                          {...register("telefono")}
                         />
                       </div>
                     </div>
 
+                    {/* Empresa */}
                     <div className="space-y-2">
                       <Label htmlFor="empresa">Empresa</Label>
                       <Input
                         id="empresa"
-                        name="empresa"
                         placeholder="Nombre de su empresa"
+                        {...register("empresa")}
                       />
                     </div>
 
+                    {/* Asunto — controlado con Controller para que shadcn Select funcione con react-hook-form */}
                     <div className="space-y-2">
                       <Label htmlFor="asunto">Asunto *</Label>
-                      <Select name="asunto" required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione un asunto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="presupuesto">
-                            Solicitud de presupuesto
-                          </SelectItem>
-                          <SelectItem value="catalogo">
-                            Información del catálogo
-                          </SelectItem>
-                          <SelectItem value="contract">
-                            Proyecto Contract
-                          </SelectItem>
-                          <SelectItem value="export">
-                            Exportación internacional
-                          </SelectItem>
-                          <SelectItem value="otro">Otro</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="asunto"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                            <SelectTrigger id="asunto" aria-invalid={!!errors.asunto}>
+                              <SelectValue placeholder="Seleccione un asunto" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ASUNTO_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {errors.asunto ? (
+                        <p className="text-sm text-destructive">{errors.asunto.message}</p>
+                      ) : null}
                     </div>
 
+                    {/* Mensaje */}
                     <div className="space-y-2">
                       <Label htmlFor="mensaje">Mensaje *</Label>
                       <Textarea
                         id="mensaje"
-                        name="mensaje"
                         placeholder="Describa su consulta o los productos en los que está interesado..."
                         rows={5}
-                        required
+                        {...register("mensaje")}
+                        aria-invalid={!!errors.mensaje}
                       />
+                      {errors.mensaje ? (
+                        <p className="text-sm text-destructive">{errors.mensaje.message}</p>
+                      ) : null}
                     </div>
 
-                    <ScrollReveal variant="fade-up">
-                      <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-                        {isSubmitting ? "Enviando..." : "Enviar mensaje"}
-                      </Button>
-                    </ScrollReveal>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Enviando..." : "Enviar mensaje"}
+                    </Button>
                   </form>
                 </div>
               </ScrollReveal>
@@ -306,16 +352,19 @@ export default function Contacto() {
         </div>
       </section>
 
-      {/* Map placeholder */}
-      <ScrollReveal variant="scale" threshold={0.15}>
-        <section className="h-[400px] bg-secondary/30 flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="h-12 w-12 text-accent mx-auto mb-4" />
-            <p className="text-lg font-semibold">Íscar, Valladolid</p>
-            <p className="text-muted-foreground">España</p>
-          </div>
-        </section>
-      </ScrollReveal>
+      {/* Google Maps — CYDMA, Íscar (Valladolid) */}
+      <section className="h-[420px] w-full overflow-hidden">
+        <iframe
+          title="Ubicación CYDMA — Íscar, Valladolid"
+          src="https://maps.google.com/maps?q=CYDMA+Is%CC%81car+Valladolid&t=&z=15&ie=UTF8&iwloc=&output=embed"
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </section>
     </Layout>
   );
 }

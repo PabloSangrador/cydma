@@ -133,6 +133,27 @@ export const RegisterUserSchema = z.object({
   company: z.string().optional(),
 });
 
+// ─── Contact Form ─────────────────────────────────────────────
+export const ContactAsuntoSchema = z.enum([
+  "presupuesto",
+  "catalogo",
+  "contract",
+  "export",
+  "otro",
+]);
+export type ContactAsunto = z.infer<typeof ContactAsuntoSchema>;
+
+export const ContactFormSchema = z.object({
+  nombre: z.string().min(2, "Nombre demasiado corto"),
+  apellidos: z.string().min(2, "Apellidos demasiado cortos"),
+  email: z.string().email("Email inválido"),
+  telefono: z.string().optional(),
+  empresa: z.string().optional(),
+  asunto: ContactAsuntoSchema,
+  mensaje: z.string().min(10, "El mensaje es demasiado corto"),
+});
+export type ContactForm = z.infer<typeof ContactFormSchema>;
+
 // ─── API Helpers ──────────────────────────────────────────────
 export const SHIPPING_COSTS = {
   standard: 8.9,

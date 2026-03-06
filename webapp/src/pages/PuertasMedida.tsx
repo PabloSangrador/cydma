@@ -19,12 +19,26 @@ import {
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, Phone, Truck, Shield, ArrowRight, ArrowLeft, Info, DoorOpen, Ruler, Clock, Award, Package, ChevronDown, ChevronUp, Paintbrush, Layers, Sparkles } from "lucide-react";
-import { categories, products, getProductsBySubcategory, type Product } from "@/data/catalog";
+import { categories } from "@/data/catalog";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/motion/ScrollReveal";
 import SEOHead from "@/components/seo/SEOHead";
 import { getBreadcrumbSchema } from "@/components/seo/schemas";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+
+interface ApiProduct {
+  id: string;
+  slug: string;
+  name: string;
+  code: string;
+  description: string;
+  images: string[];
+  categoryId: string;
+  subcategoryId: string | null;
+  isActive: boolean;
+}
 
 // Obtener la categoría de puertas y sus subcategorías
 const puertasCategory = categories.find(c => c.id === "puertas");
@@ -77,14 +91,11 @@ const complementos = [
   { id: "silicona", label: "Silicona blanca", precio: 5 },
 ];
 
-// Precios base por tipo de puerta
+// Precios base por tipo de puerta (IDs reales del catálogo)
 const preciosBase: Record<string, number> = {
-  "lisas": 159,
-  "fresadas": 189,
   "lacadas": 219,
-  "clasicas": 199,
-  "vinilo-2d": 149,
-  "vinilo-3d": 169,
+  "laminadas": 149,
+  "madera": 189,
 };
 
 // Componente Step Header
@@ -169,14 +180,19 @@ export default function PuertasMedida() {
     });
   };
 
-  // Obtener modelos de la categoría seleccionada
-  const modelosDisponibles = useMemo(() => {
-    if (!categoriaSeleccionada) return [];
-    return getProductsBySubcategory("puertas", categoriaSeleccionada);
-  }, [categoriaSeleccionada]);
+  // Obtener modelos de la categoría seleccionada desde la API
+  const { data: modelosDisponibles = [], isLoading: modelosLoading } = useQuery<ApiProduct[]>({
+    queryKey: ["productos-puertas", categoriaSeleccionada],
+    queryFn: async () => {
+      if (!categoriaSeleccionada) return [];
+      const params = new URLSearchParams({ category: "puertas", subcategory: categoriaSeleccionada });
+      return api.get<ApiProduct[]>(`/api/products?${params}`);
+    },
+    enabled: !!categoriaSeleccionada,
+  });
 
   // Auto-seleccionar primer modelo cuando cambia la categoría
-  useMemo(() => {
+  useEffect(() => {
     if (modelosDisponibles.length > 0 && !modelosDisponibles.find(m => m.id === modeloSeleccionado)) {
       setModeloSeleccionado(modelosDisponibles[0].id);
     }
@@ -184,8 +200,8 @@ export default function PuertasMedida() {
 
   // Obtener el producto seleccionado
   const productoSeleccionado = useMemo(() => {
-    return products.find(p => p.id === modeloSeleccionado);
-  }, [modeloSeleccionado]);
+    return modelosDisponibles.find(p => p.id === modeloSeleccionado);
+  }, [modelosDisponibles, modeloSeleccionado]);
 
   // Toggle complementos
   const toggleComplemento = (id: string) => {
@@ -222,7 +238,7 @@ export default function PuertasMedida() {
     { icon: Package, titulo: "Todo Incluido", descripcion: "Block completo con herrajes" },
   ];
 
-  // Tipos de puertas para sección comparativa SEO
+  // Tipos de puertas para sección comparativa SEO (IDs reales del catálogo)
   const tiposPuerta = [
     {
       id: "lacadas",
@@ -234,20 +250,20 @@ export default function PuertasMedida() {
       desde: 219,
     },
     {
-      id: "fresadas",
-      titulo: "Puertas Fresadas",
+      id: "madera",
+      titulo: "Puertas de Madera",
       icon: Layers,
       imagen: "/lac-505.jpeg",
-      descripcion: "Diseños con relieve que aportan personalidad. Clásicas revisadas con un toque contemporáneo.",
-      ventajas: ["Diseño diferenciador", "Múltiples patrones", "Estilo versátil"],
+      descripcion: "Puertas rechapadas con la calidez y elegancia de la madera natural. Clásicas y duraderas.",
+      ventajas: ["Calidez natural", "Alta durabilidad", "Estilo atemporal"],
       desde: 189,
     },
     {
-      id: "vinilo-2d",
-      titulo: "Puertas en Vinilo",
+      id: "laminadas",
+      titulo: "Puertas Laminadas",
       icon: Sparkles,
       imagen: "/lac-100.jpeg",
-      descripcion: "Alta resistencia con acabados que imitan la madera natural. Relación calidad-precio excelente.",
+      descripcion: "Alta resistencia con acabados en vinilo que imitan la madera natural. Relación calidad-precio excelente.",
       ventajas: ["Máxima resistencia", "Económicas", "Fácil limpieza"],
       desde: 149,
     },
@@ -597,7 +613,23 @@ export default function PuertasMedida() {
                   />
                   {expandedSteps.has(2) && (
                     <div className="px-5 pb-5">
-                      {modelosDisponibles.length > 0 ? (
+                      {!categoriaSeleccionada ? (
+                        <p className="text-sm text-muted-foreground py-4">
+                          Selecciona primero un tipo de puerta
+                        </p>
+                      ) : modelosLoading ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="rounded-xl border-2 border-border overflow-hidden animate-pulse">
+                              <div className="aspect-[3/4] bg-secondary/40" />
+                              <div className="p-3 space-y-1.5">
+                                <div className="h-3 w-3/4 bg-secondary rounded" />
+                                <div className="h-2.5 w-1/2 bg-secondary rounded" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : modelosDisponibles.length > 0 ? (
                         <RadioGroup
                           value={modeloSeleccionado}
                           onValueChange={setModeloSeleccionado}
@@ -614,15 +646,19 @@ export default function PuertasMedida() {
                               )}
                             >
                               <RadioGroupItem value={modelo.id} className="sr-only" />
-                              {/* Imagen más grande */}
                               <div className="aspect-[3/4] bg-secondary/30 overflow-hidden">
-                                <img
-                                  src={modelo.images[0]}
-                                  alt={modelo.name}
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                />
+                                {modelo.images[0] ? (
+                                  <img
+                                    src={modelo.images[0]}
+                                    alt={modelo.name}
+                                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <DoorOpen className="h-10 w-10 text-muted-foreground/30" />
+                                  </div>
+                                )}
                               </div>
-                              {/* Info */}
                               <div className="p-3 bg-card">
                                 <span className="font-semibold text-sm block truncate">{modelo.name}</span>
                                 <span className="text-xs text-muted-foreground">{modelo.code}</span>
@@ -637,7 +673,7 @@ export default function PuertasMedida() {
                         </RadioGroup>
                       ) : (
                         <p className="text-sm text-muted-foreground py-4">
-                          Selecciona primero un tipo de puerta
+                          No hay modelos disponibles para este tipo de puerta.
                         </p>
                       )}
                     </div>

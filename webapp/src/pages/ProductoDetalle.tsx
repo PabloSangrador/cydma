@@ -252,6 +252,7 @@ export default function ProductoDetalle() {
                       <img
                         src={image}
                         alt={`${product.name} ${index + 1}`}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </button>
@@ -426,6 +427,7 @@ export default function ProductoDetalle() {
                         <img
                           src={relProduct.images[0]}
                           alt={relProduct.name}
+                          loading="lazy"
                           className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (

@@ -550,6 +550,7 @@ export default function CatalogoCategoria() {
                               <img
                                 src={product.images[0]}
                                 alt={product.name}
+                                loading="lazy"
                                 className={cn(
                                   "w-full h-full object-contain transition-all duration-500",
                                   product.images[1]
@@ -561,6 +562,7 @@ export default function CatalogoCategoria() {
                                 <img
                                   src={product.images[1]}
                                   alt={product.name}
+                                  loading="lazy"
                                   className="absolute inset-0 w-full h-full object-contain opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                                 />
                               ) : null}

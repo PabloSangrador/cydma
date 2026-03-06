@@ -1,18 +1,27 @@
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { categories, getProductCountByCategory } from "@/data/catalog";
+import { categories } from "@/data/catalog";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/motion/ScrollReveal";
 import SEOHead from "@/components/seo/SEOHead";
 import { useCatalogSEO } from "@/hooks/useSEO";
 import { getBreadcrumbSchema } from "@/components/seo/schemas";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 export default function Catalogo() {
   const seo = useCatalogSEO();
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: "Catálogo", url: "https://cydma.es/catalogo" }
   ]);
+
+  const { data: productCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ["product-counts"],
+    queryFn: () => api.get<Record<string, number>>("/api/products/counts"),
+    staleTime: 5 * 60 * 1000,
+  });
+
   return (
     <Layout>
       <SEOHead
@@ -21,9 +30,9 @@ export default function Catalogo() {
         canonical={seo.canonical}
         schema={breadcrumbSchema}
       />
+
       {/* Hero Header */}
       <section className="relative h-[40vh] min-h-[320px] flex items-center justify-center overflow-hidden">
-        {/* Background image */}
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&q=80"
@@ -33,18 +42,14 @@ export default function Catalogo() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
         </div>
 
-        {/* Content */}
         <div className="relative z-10 text-center px-6">
-          {/* Breadcrumb */}
           <motion.nav
             className="flex items-center justify-center gap-2 text-white/60 text-sm mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Link to="/" className="hover:text-white transition-colors">
-              Inicio
-            </Link>
+            <Link to="/" className="hover:text-white transition-colors">Inicio</Link>
             <ChevronRight className="h-4 w-4" />
             <span className="text-white">Catálogo</span>
           </motion.nav>
@@ -72,7 +77,6 @@ export default function Catalogo() {
       {/* Categories Grid */}
       <section className="py-20 lg:py-28">
         <div className="container">
-          {/* Section header */}
           <ScrollReveal variant="fade-up" threshold={0.1}>
             <div className="text-center mb-14">
               <span className="text-accent text-xs font-sans font-medium tracking-[0.2em] uppercase mb-4 block">
@@ -84,10 +88,13 @@ export default function Catalogo() {
             </div>
           </ScrollReveal>
 
-          {/* Grid - asymmetric like home CategoriesSection */}
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6" stagger={0.06} delay={0.1}>
+          <StaggerContainer
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
+            stagger={0.06}
+            delay={0.1}
+          >
             {categories.map((category) => {
-              const productCount = getProductCountByCategory(category.id);
+              const count = productCounts[category.id] ?? null;
 
               return (
                 <StaggerItem key={category.id} variant="scale">
@@ -95,23 +102,19 @@ export default function Catalogo() {
                     to={`/catalogo/${category.slug}`}
                     className="group relative block overflow-hidden rounded-xl aspect-[4/3]"
                   >
-                    {/* Background image */}
                     <img
                       src={category.image}
                       alt={category.name}
+                      loading="lazy"
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
 
-                    {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent group-hover:from-black/70 transition-all duration-500" />
-
-                    {/* Top accent line */}
                     <div className="absolute top-5 left-5 w-6 h-px bg-white/30 group-hover:w-10 group-hover:bg-accent transition-all duration-500" />
 
-                    {/* Content */}
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <span className="text-white/50 text-xs font-sans tracking-wider uppercase mb-2 block">
-                        {productCount} productos
+                        {count !== null ? `${count} productos` : ""}
                       </span>
                       <h3 className="font-serif text-2xl text-white font-normal mb-2">
                         {category.name}
@@ -119,8 +122,6 @@ export default function Catalogo() {
                       <p className="text-white/60 text-sm line-clamp-2 mb-4">
                         {category.description}
                       </p>
-
-                      {/* Hover CTA */}
                       <div className="flex items-center gap-2 text-accent text-sm font-sans font-medium tracking-wide opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-400">
                         Ver productos
                         <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
@@ -142,7 +143,11 @@ export default function Catalogo() {
               Navegación Rápida
             </h2>
           </ScrollReveal>
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" stagger={0.06} delay={0.1}>
+          <StaggerContainer
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            stagger={0.06}
+            delay={0.1}
+          >
             {categories
               .filter((c) => c.subcategories && c.subcategories.length > 0)
               .map((category) => (
@@ -167,18 +172,17 @@ export default function Catalogo() {
                           </Link>
                         </li>
                       ))}
-                      {category.subcategories &&
-                        category.subcategories.length > 5 && (
-                          <li>
-                            <Link
-                              to={`/catalogo/${category.slug}`}
-                              className="text-sm text-accent font-medium hover:underline flex items-center gap-1 mt-2"
-                            >
-                              Ver todas ({category.subcategories.length})
-                              <ArrowRight className="h-3 w-3" />
-                            </Link>
-                          </li>
-                        )}
+                      {category.subcategories && category.subcategories.length > 5 && (
+                        <li>
+                          <Link
+                            to={`/catalogo/${category.slug}`}
+                            className="text-sm text-accent font-medium hover:underline flex items-center gap-1 mt-2"
+                          >
+                            Ver todas ({category.subcategories.length})
+                            <ArrowRight className="h-3 w-3" />
+                          </Link>
+                        </li>
+                      )}
                     </ul>
                   </div>
                 </StaggerItem>
